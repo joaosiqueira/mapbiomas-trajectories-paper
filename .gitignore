@@ -1,0 +1,16 @@
+# AI / IDE
+.claude/
+.cursor/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Google Earth Engine exports
+*.tif
+*.csv

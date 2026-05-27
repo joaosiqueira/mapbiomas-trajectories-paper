@@ -29,8 +29,14 @@ var ColorRamp = require('users/joaovsiqueira1/packages:ColorRamp.js');
 var palettes = require('users/mapbiomas/modules:Palettes.js');
 var vis = {'min': 0,'max': 62,'palette': palettes.get('classification8')}
 
-var asset = ee.Image('projects/mapbiomas-public/assets/brazil/lulc/collection10/mapbiomas_brazil_collection10_coverage_v2')
-print(asset, "asset")
+// ---- External GEE assets ----
+var estados = ee.FeatureCollection("projects/mapbiomas-workspace/AUXILIAR/estados-2017--");
+var trajectoriesImage = ee.Image("projects/nexgenmap/MapBiomas_TOOLs/Trajectories/Trajs_image_col9");
+var assetLulc = ee.Image('projects/mapbiomas-public/assets/brazil/lulc/collection10/mapbiomas_brazil_collection10_coverage_v2');
+var assetTerritories = ee.ImageCollection('projects/mapbiomas-territories/assets/TERRITORIES/LULC/BRAZIL/COLLECTION9/dashboard')
+    .filter(ee.Filter.eq('CATEG_ID', 4)).max();
+
+print(assetLulc, "asset")
 
 // Define the years to process
 var anos = ['1985','1986','1987','1988','1989','1990','1991','1992','1993','1994','1995',
@@ -39,23 +45,46 @@ var anos = ['1985','1986','1987','1988','1989','1990','1991','1992','1993','1994
             '2018','2019','2020','2021','2022','2023','2024'];
 
 
-// Loop through the years
-for (var i_ano=0;i_ano<anos.length; i_ano++){  
-  var ano = anos[i_ano]; 
+// Stack remapped classification bands for all years using server-side iteration
+var classRemap = {
+  // Forest formation
+  1: 1, 3: 3,
+  // Savanna formation
+  4: 4,
+  // Merged into Forest (3)
+  5: 3, 6: 3, 49: 3,
+  // Mangrove
+  45: 45,
+  // Forest plantation
+  9: 9,
+  // Natural non-forest formations
+  10: 10, 11: 11, 12: 12, 32: 32, 29: 29, 50: 50, 13: 13, 42: 42, 43: 43, 44: 44, 66: 66,
+  // Grassland (12) receives 63
+  63: 12,
+  // Pasture
+  14: 14, 15: 15,
+  // Agriculture (18) absorbs all crop subtypes
+  18: 18, 19: 18, 39: 18, 20: 18, 40: 18, 62: 18, 41: 18,
+  57: 18, 58: 18, 36: 18, 46: 18, 47: 18, 35: 18, 65: 18, 48: 18,
+  // Mosaic, non-vegetated, urban, mining
+  21: 21, 22: 22, 23: 23, 24: 24, 30: 30, 25: 25, 61: 61, 26: 26,
+  // Water bodies and aquaculture
+  33: 33, 31: 31, 34: 34, 75: 75
+};
+var classFrom = Object.keys(classRemap).map(function(k) { return Number(k); });
+var classTo = Object.keys(classRemap).map(function(k) { return classRemap[k]; });
 
-  var class_ano = asset.select('classification_'+ano)
-                .remap([1, 3, 4, 5, 6, 49, 45, 10, 11, 12, 32, 29, 50, 13, 42, 43, 44, 66, 63, 14, 15, 18, 19, 39, 20, 40, 62, 41, 57, 58, 36, 46, 47, 35, 65, 48, 9, 21, 22, 23, 24, 30, 25, 61, 26, 33, 31, 34, 75],
-                       [1, 3, 4, 3, 3,  3, 45, 10, 11, 12, 32, 29, 50, 13, 42, 43, 44, 66, 12, 14, 15, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 9, 21, 22, 23, 24, 30, 25, 61, 26, 33, 31, 34, 75])
-                .rename('classification_'+ano)
+var class_outTotal = ee.Image(ee.List(anos).iterate(function(ano, result) {
+  var classYear = assetLulc.select('classification_' + ano)
+    .remap(classFrom, classTo)
+    .rename('classification_' + ano);
+  return ee.Image(result).addBands(classYear);
+}, ee.Image()));
 
-  if (i_ano == 0){ var class_outTotal = class_ano }  
-  else {class_outTotal = class_outTotal.addBands(class_ano); }
-}
+var assetLulc = class_outTotal
 
-var asset = class_outTotal
-
-var class_2024 = asset.select('classification_2024')
-var class_1985 = asset.select('classification_1985')
+var class_2024 = assetLulc.select('classification_2024')
+var class_1985 = assetLulc.select('classification_1985')
 
 
 Map.addLayer(class_2024.select('classification_2024'), vis, "classification2024", false)
@@ -192,7 +221,7 @@ var visParams = {
 
 
 // all lulc images
-var image = ee.Image(asset);
+var image = ee.Image(assetLulc);
 
 var trajectoriesClassIds = {
     3: {
@@ -346,12 +375,11 @@ var traj_urb = trajectoriesClassIds[24].trajectories
 var traj_agr = trajectoriesClassIds[18].trajectories
 var traj_wet = trajectoriesClassIds[11].trajectories
 
-var Trajs_image = ee.Image.cat(
-  [traj_for, traj_pas,traj_sav,traj_gra,traj_wat,traj_urb, traj_agr, traj_wet ]);
- 
- 
-var Trajs_image = Trajs_image.rename(["traj_for", "traj_pas", "traj_sav", "traj_gra", "traj_wat", "traj_urb", "traj_agr", "traj_wet"]) ;
-print('Trajs_image', Trajs_image);
+var trajectoriesComposite = ee.Image.cat(
+  [traj_for, traj_pas,traj_sav,traj_gra,traj_wat,traj_urb, traj_agr, traj_wet ])
+    .rename(["traj_for", "traj_pas", "traj_sav", "traj_gra", "traj_wat", "traj_urb", "traj_agr", "traj_wet"]);
+
+print('trajectoriesComposite', trajectoriesComposite);
 
 Map.addLayer(trajectoriesClassIds[3].number_of_changes, visParams.number_of_changes, 'Number of changes', false);
 Map.addLayer(trajectoriesClassIds[3].number_of_presence, visParams.number_of_presence, 'Number of time points of presence', false);
@@ -365,7 +393,7 @@ Map.addLayer(trajectoriesClassIds[18].trajectories, visParams.trajectories, 'Tra
 Map.addLayer(trajectoriesClassIds[11].trajectories, visParams.trajectories, 'Trajectories_Wetlands', false);
 
 
-print("imagem_trajs", trajs)
+print("trajectoriesImage", trajectoriesImage)
 
 /**
  * @description
@@ -378,13 +406,8 @@ print("imagem_trajs", trajs)
 
 
 
-// Asset mapbiomas
-//var asset = trajs
-var asset = Trajs_image
-
-// Asset of regions for which you want to calculate statistics
-var assetTerritories = ee.ImageCollection('projects/mapbiomas-territories/assets/TERRITORIES/LULC/BRAZIL/COLLECTION9/dashboard')
-    .filter(ee.Filter.eq('CATEG_ID', 4)).max();
+// Asset mapbiomas (trajectories composite by class)
+var asset = trajectoriesComposite
 
 // Change the scale if you need.
 var scale = 30;
@@ -408,7 +431,7 @@ var mapbiomas = ee.Image(asset).selfMask();
 var pixelArea = ee.Image.pixelArea().divide(1000000);
 
 // Geometry to export
-var geometry = trajs.geometry();
+var geometry = trajectoriesImage.geometry();
 
 /**
  * Convert a complex ob to feature collection

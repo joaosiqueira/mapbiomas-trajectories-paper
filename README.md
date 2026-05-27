@@ -48,7 +48,7 @@ The script loads MapBiomas Collection 10 data, remaps the original 49 classes, c
 | 7 | Stable presence | Presence → Stable → Presence |
 | 8 | Stable absence | Absence → Stable → Absence |
 
-Adapted from Bilintoh et al. (2024). *GIScience & Remote Sensing, 61*(1).
+Adapted from Bilintoh, T. M., Pontius, R. G., & Zhang, A. (2024). Methods to compare sites concerning a category's change during various time intervals. *GIScience & Remote Sensing, 61*(1). https://doi.org/10.1080/15481603.2024.2409484
 
 ## Script structure
 
@@ -75,6 +75,8 @@ The script requires read access to these Earth Engine assets:
 | `users/joaovsiqueira1/brazil-country-trajectorties-3c` | Pre-computed country-level area tables |
 | `users/joaovsiqueira1/brazil-biomes-trajectorties-3c` | Pre-computed biome-level area tables |
 
-## Reference
+## References
+
+Bilintoh, T. M., Pontius, R. G., & Zhang, A. (2024). Methods to compare sites concerning a category's change during various time intervals. *GIScience & Remote Sensing, 61*(1). https://doi.org/10.1080/15481603.2024.2409484
 
 Fonseca, M., Rosa, M., Shimbo, J. Z., Ramos Neto, M. B., Matos, A. P., Lupinetti-Cunha, A., Conciani, D., Rosa, E., Vélez-Martin, E., Siqueira, J., Mourão, K., Oliveira Jr, L. A., Ramos, M., Crusco, N., & Azevedo, T. (2026). Beyond net change: four decades of land cover and land use trajectories across Brazilian biomes.

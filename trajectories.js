@@ -71,17 +71,33 @@ var classRemap = {
   // Water bodies and aquaculture
   33: 33, 31: 31, 34: 34, 75: 75
 };
-var classFrom = Object.keys(classRemap).map(function(k) { return Number(k); });
-var classTo = Object.keys(classRemap).map(function(k) { return classRemap[k]; });
+var classFrom = Object.keys(classRemap).map(
+    function(k) {
+        return Number(k);
+    });
 
-var class_outTotal = ee.Image(ee.List(anos).iterate(function(ano, result) {
-  var classYear = assetLulc.select('classification_' + ano)
-    .remap(classFrom, classTo)
-    .rename('classification_' + ano);
-  return ee.Image(result).addBands(classYear);
+var classTo = Object.keys(classRemap).map(
+    function(k) {
+        return classRemap[k];
+    });
+
+print(classFrom);
+print(classTo);
+
+var class_outTotal = ee.Image(ee.List(anos).iterate(
+    function(year, result) {
+        var bandName = ee.String('classification_').cat(ee.String(year));
+
+        var classYear = assetLulc.select(bandName)
+        .remap(classFrom, classTo)
+        .rename(bandName);
+
+    return ee.Image(result).addBands(classYear);
 }, ee.Image()));
 
 var assetLulc = class_outTotal
+
+print(assetLulc);
 
 var class_2024 = assetLulc.select('classification_2024')
 var class_1985 = assetLulc.select('classification_1985')

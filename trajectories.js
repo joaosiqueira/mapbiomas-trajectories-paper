@@ -4,8 +4,9 @@
  *      Dashboard for LULC trajectories analysis
  *  
  * @author
- *      João Siqueira, Mapbiomas.
- *      Robert Gilmore Pontius Jr, Ph.D, Clark University.
+ *      João Siqueira
+ *      Marisa Fonseca
+ *      Marcos Rosa
  * 
  * @contact
  *      Julia Shimbo, Marcos Rosa and João Siqueira
@@ -27,25 +28,36 @@ var ColorRamp = require('users/joaovsiqueira1/packages:ColorRamp.js');
  */
 
 var palettes = require('users/mapbiomas/modules:Palettes.js');
-var vis = {'min': 0,'max': 62,'palette': palettes.get('classification8')}
+var vis = {'min': 0,'max': 62,'palette': palettes.get('classification8')};
 
-// ---- External GEE assets ----
-var estados = ee.FeatureCollection("projects/mapbiomas-workspace/AUXILIAR/estados-2017--");
-var trajectoriesImage = ee.Image("projects/nexgenmap/MapBiomas_TOOLs/Trajectories/Trajs_image_col9");
-var assetLulc = ee.Image('projects/mapbiomas-public/assets/brazil/lulc/collection10/mapbiomas_brazil_collection10_coverage_v2');
-var assetTerritories = ee.ImageCollection('projects/mapbiomas-territories/assets/TERRITORIES/LULC/BRAZIL/COLLECTION9/dashboard')
+// ---- External GEE asset paths ----
+var estadosPath = "projects/mapbiomas-workspace/AUXILIAR/estados-2017--";
+var trajectoriesImagePath = "projects/nexgenmap/MapBiomas_TOOLs/Trajectories/Trajs_image_col9";
+var lulcAssetPath = 'projects/mapbiomas-public/assets/brazil/lulc/collection10/mapbiomas_brazil_collection10_coverage_v2';
+var territoriesPath = 'projects/mapbiomas-territories/assets/TERRITORIES/LULC/BRAZIL/COLLECTION9/dashboard';
+
+// ---- GEE objects ----
+var estados = ee.FeatureCollection(estadosPath);
+var trajectoriesImage = ee.Image(trajectoriesImagePath);
+var assetLulc = ee.Image(lulcAssetPath);
+var assetTerritories = ee.ImageCollection(territoriesPath)
     .filter(ee.Filter.eq('CATEG_ID', 4)).max();
 
 print(assetLulc, "asset")
 
-// Define the years to process
-var anos = ['1985','1986','1987','1988','1989','1990','1991','1992','1993','1994','1995',
-            '1996','1997','1998','1999','2000','2001','2002','2003','2004','2005','2006',
-            '2007','2008','2009','2010','2011','2012','2013','2014','2015','2016','2017',
-            '2018','2019','2020','2021','2022','2023','2024'];
+/**
+ * define years
+ */
+var years = [
+    1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+    1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
+    2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017,
+    2018, 2019, 2020, 2021, 2022, 2023, 2024
+];
 
-
-// Stack remapped classification bands for all years using server-side iteration
+/**
+ * stack remapped classification bands
+ */
 var classRemap = {
   // Forest formation
   1: 1, 3: 3,
@@ -71,6 +83,7 @@ var classRemap = {
   // Water bodies and aquaculture
   33: 33, 31: 31, 34: 34, 75: 75
 };
+
 var classFrom = Object.keys(classRemap).map(
     function(k) {
         return Number(k);
@@ -84,7 +97,10 @@ var classTo = Object.keys(classRemap).map(
 print(classFrom);
 print(classTo);
 
-var class_outTotal = ee.Image(ee.List(anos).iterate(
+var firstYear = years[0];
+var remainingYears = years.slice(1);
+
+var assetLulc = ee.Image(ee.List(remainingYears).iterate(
     function(year, result) {
         var bandName = ee.String('classification_').cat(ee.String(year));
 
@@ -93,29 +109,31 @@ var class_outTotal = ee.Image(ee.List(anos).iterate(
         .rename(bandName);
 
     return ee.Image(result).addBands(classYear);
-}, ee.Image()));
-
-var assetLulc = class_outTotal
+}, assetLulc.select('classification_' + firstYear)
+    .remap(classFrom, classTo)
+    .rename('classification_' + firstYear)));
 
 print(assetLulc);
 
-var class_2024 = assetLulc.select('classification_2024')
-var class_1985 = assetLulc.select('classification_1985')
+var classification2024 = assetLulc.select('classification_2024')
+var classification1985 = assetLulc.select('classification_1985')
 
 
-Map.addLayer(class_2024.select('classification_2024'), vis, "classification2024", false)
-Map.addLayer(class_1985.select('classification_1985'), vis, "classification1985", false)
+Map.addLayer(classification2024.select('classification_2024'), vis, "classification2024", false)
+Map.addLayer(classification1985.select('classification_1985'), vis, "classification1985", false)
 
-// the analysis runs only for the groups below
+/**
+ * class groups for analysis
+ */
 var classIds = [
-    [3],                                     // forest
-    [15],                                    // pasture
-    [11],
-    [18],                                   // crops
-    [33],
-    [4],
-    [12],
-    [24],
+    [3],  // Forest
+    [15], // Pasture
+    [11], // Wetland
+    [18], // Agriculture
+    [33], // Water
+    [4],  // Savanna
+    [12], // Grassland
+    [24], // Urban
 ];
 
 var periods = [
@@ -124,11 +142,14 @@ var periods = [
 
 var mpbPalette = Palettes.get('classification7');
 
-// defined user functions
 /**
- * 
- * @param {*} image 
- * @returns 
+ * user functions
+ */
+
+/**
+ * Counts the number of distinct non-null classes across bands.
+ * @param {ee.Image} image A multi-band classification image.
+ * @returns {ee.Image} Single-band image with the count of distinct classes.
  */
 var calculateNumberOfClasses = function (image) {
 
@@ -138,9 +159,9 @@ var calculateNumberOfClasses = function (image) {
 };
 
 /**
- * 
- * @param {*} image 
- * @returns 
+ * Counts the number of class transitions (runs - 1) across bands.
+ * @param {ee.Image} image A multi-band classification image.
+ * @returns {ee.Image} Single-band image with the number of changes.
  */
 var calculateNumberOfChanges = function (image) {
 
@@ -150,9 +171,9 @@ var calculateNumberOfChanges = function (image) {
 };
 
 /**
- * 
- * @param {*} image 
- * @returns 
+ * Counts the number of years where the class is present (sum of binary bands).
+ * @param {ee.Image} image A multi-band binary image (1 = presence, 0 = absence).
+ * @returns {ee.Image} Single-band image with the number of presence years.
  */
 var calculateNumberOfPresence = function (image) {
 
@@ -220,23 +241,22 @@ var visParams = {
         'max': 8,
         'palette': [
             "#ffffff", //[0] Mask 
-            "#941004", //[1] Presence🡪Loss🡪Absence
-            "#020e7a", //[2] Absence🡪Gain🡪Presence
-            "#f5261b", //[3] Presence🡪Alternation🡪Loss🡪Absence
-            "#14a5e3", //[4] Absence🡪Alternation🡪Gain🡪Presence
-            "#8b8000", //[5] Presence🡪Alternation🡪Presence
-            "#ffff00", //[6] Absence🡪Alternation🡪Absence
-            "#666666", //[7] Presence🡪Stable🡪Presence
-            "#cfcfcf", //[8] Absence🡪Stable🡪Absence
+            "#941004", //[1] Presence→Loss→Absence
+            "#020e7a", //[2] Absence→Gain→Presence
+            "#f5261b", //[3] Presence→Alternation→Loss→Absence
+            "#14a5e3", //[4] Absence→Alternation→Gain→Presence
+            "#8b8000", //[5] Presence→Alternation→Presence
+            "#ffff00", //[6] Absence→Alternation→Absence
+            "#666666", //[7] Presence→Stable→Presence
+            "#cfcfcf", //[8] Absence→Stable→Absence
         ],
         'format': 'png'
     }
 };
 
-
-
-
-// all lulc images
+/**
+ * all lulc images
+ */
 var image = ee.Image(assetLulc);
 
 var trajectoriesClassIds = {
@@ -282,7 +302,9 @@ var trajectoriesClassIds = {
     },
 }
 
-// for each period in list
+/**
+ * iterate over periods
+ */
 periods.forEach(
     function (period) {
         var count = period[1] - period[0] + 1;
@@ -298,19 +320,9 @@ periods.forEach(
 
         // number of classes
         var nClasses = calculateNumberOfClasses(imagePeriod);
-        print ("nclasses", nClasses)
-        Map.addLayer (nClasses, {}, "number of classes")
-print(nClasses, "nClasses")
-
  
         // number of changes
         var nChanges = calculateNumberOfChanges(imagePeriod);
-
-        // stable
-        // var stable = imagePeriod.select(0).multiply(nClasses.eq(1));
-
-        // Map.addLayer(stable, visParams.stable, 'Stable', false);
-        // Map.addLayer(nClasses, visParams.number_of_classes, 'Number of classes', false);
 
         // trajectories
         classIds.forEach(
@@ -332,12 +344,11 @@ print(nClasses, "nClasses")
 
                 // nChanges in classList
                 var nChanges = calculateNumberOfChanges(classIdsMask);
+
                 // nChanges rules in the analisys
                 var nChangesEq0 = nChanges.eq(0); //  no change
                 var nChangesEq1 = nChanges.eq(1); //  1 change
                 var nChangesGt1 = nChanges.gt(1); // >1 changes
-                // var nChangesGt2 = nChanges.gt(2); // >2 changes
-
                 // lulc classIds masks for the first year and last year 
                 var t1 = classIdsMask.select(bands[0]);
                 var tn = classIdsMask.select(bands[bands.length - 1]);
@@ -352,25 +363,15 @@ print(nClasses, "nClasses")
                 var abAbCh1 = t1.eq(0).and(nChangesGt1).and(tn.eq(0));
                 var prPrCh1 = t1.eq(1).and(nChangesGt1).and(tn.eq(1));
 
-                // (*) the classes Ab-Ab and Pr-Pr the classes were joined
-                // var trajectories = ee.Image(0)
-                //     .where(prAbCh1, 1)  //[1] Pr-Ab Ch=1 | Loss without Alternation
-                //     .where(abPrCh1, 2)  //[2] Ab-Pr Ch=1 | Gain without Alternation
-                //     .where(prAbCh2, 3)  //[3] Pr-Ab Ch>2 | Loss with Alternation
-                //     .where(abPrCh2, 4)  //[4] Ab-Pr Ch>2 | Gain with Alternation
-                //     .where(abAbCh1, 5)  //[5] Ab-Ab Ch>1 | Stable with Alternation (Ab-Ab)
-                //     .where(prPrCh1, 5)  //[5] Pr-Pr Ch>1 | Stable with Alternation (Pr-Pr)
-                //     .where(prPrCh0, 6)  //[6] Pr-Pr Ch=0 | Stable Presence
-                //     .where(abAbCh0, 7); //[7] Ab-Ab Ch=0 | Stable Absence
                 var trajectories = ee.Image(0)
-                    .where(prAbCh1, 1)  // [1] Presence🡪Loss🡪Absence
-                    .where(abPrCh1, 2)  // [2] Absence🡪Gain🡪Presence
-                    .where(prAbCh2, 3)  // [3] Presence🡪Alternation🡪Loss🡪Absence
-                    .where(abPrCh2, 4)  // [4] Absence🡪Alternation🡪Gain🡪Presence
-                    .where(prPrCh1, 5)  // [5] Presence🡪Alternation🡪Presence
-                    .where(abAbCh1, 6)  // [6] Absence🡪Alternation🡪Absence
-                    .where(prPrCh0, 7)  // [7] Presence🡪Stable🡪Presence
-                    .where(abAbCh0, 8); // [8] Absence🡪Stable🡪Absence
+                    .where(prAbCh1, 1)  // [1] Presence→Loss→Absence
+                    .where(abPrCh1, 2)  // [2] Absence→Gain→Presence
+                    .where(prAbCh2, 3)  // [3] Presence→Alternation→Loss→Absence
+                    .where(abPrCh2, 4)  // [4] Absence→Alternation→Gain→Presence
+                    .where(prPrCh1, 5)  // [5] Presence→Alternation→Presence
+                    .where(abAbCh1, 6)  // [6] Absence→Alternation→Absence
+                    .where(prPrCh0, 7)  // [7] Presence→Stable→Presence
+                    .where(abAbCh0, 8); // [8] Absence→Stable→Absence
 
                 trajectories = trajectories.rename('trajectories').selfMask();
 
@@ -382,45 +383,38 @@ print(nClasses, "nClasses")
     }
 );
 
-var traj_for = trajectoriesClassIds[3].trajectories
-var traj_pas = trajectoriesClassIds[15].trajectories
-var traj_sav = trajectoriesClassIds[4].trajectories
-var traj_gra = trajectoriesClassIds[12].trajectories
-var traj_wat = trajectoriesClassIds[33].trajectories
-var traj_urb = trajectoriesClassIds[24].trajectories
-var traj_agr = trajectoriesClassIds[18].trajectories
-var traj_wet = trajectoriesClassIds[11].trajectories
+var trajForest = trajectoriesClassIds[3].trajectories
+var trajPasture = trajectoriesClassIds[15].trajectories
+var trajSavanna = trajectoriesClassIds[4].trajectories
+var trajGrassland = trajectoriesClassIds[12].trajectories
+var trajWater = trajectoriesClassIds[33].trajectories
+var trajUrban = trajectoriesClassIds[24].trajectories
+var trajAgriculture = trajectoriesClassIds[18].trajectories
+var trajWetland = trajectoriesClassIds[11].trajectories
 
 var trajectoriesComposite = ee.Image.cat(
-  [traj_for, traj_pas,traj_sav,traj_gra,traj_wat,traj_urb, traj_agr, traj_wet ])
-    .rename(["traj_for", "traj_pas", "traj_sav", "traj_gra", "traj_wat", "traj_urb", "traj_agr", "traj_wet"]);
+  [trajForest, trajPasture, trajSavanna, trajGrassland, trajWater, trajUrban, trajAgriculture, trajWetland])
+    .rename(["forest", "pasture", "savanna", "grassland", "water", "urban", "agriculture", "wetland"]);
 
 print('trajectoriesComposite', trajectoriesComposite);
 
 Map.addLayer(trajectoriesClassIds[3].number_of_changes, visParams.number_of_changes, 'Number of changes', false);
 Map.addLayer(trajectoriesClassIds[3].number_of_presence, visParams.number_of_presence, 'Number of time points of presence', false);
-Map.addLayer(trajectoriesClassIds[3].trajectories, visParams.trajectories, 'Trajectories_Flor', false);
-Map.addLayer(trajectoriesClassIds[15].trajectories, visParams.trajectories, 'Trajectories_Pasture', false);
-Map.addLayer(trajectoriesClassIds[4].trajectories, visParams.trajectories, 'Trajectories_Savana', false);
-Map.addLayer(trajectoriesClassIds[12].trajectories, visParams.trajectories, 'Trajectories_Campos', false);
-Map.addLayer(trajectoriesClassIds[33].trajectories, visParams.trajectories, 'Trajectories_rioslagos', false);
-Map.addLayer(trajectoriesClassIds[24].trajectories, visParams.trajectories, 'Trajectories_urbano', false);
-Map.addLayer(trajectoriesClassIds[18].trajectories, visParams.trajectories, 'Trajectories_Crops', false);
-Map.addLayer(trajectoriesClassIds[11].trajectories, visParams.trajectories, 'Trajectories_Wetlands', false);
+Map.addLayer(trajectoriesClassIds[3].trajectories, visParams.trajectories, 'Trajectories Forest', false);
+Map.addLayer(trajectoriesClassIds[15].trajectories, visParams.trajectories, 'Trajectories Pasture', false);
+Map.addLayer(trajectoriesClassIds[4].trajectories, visParams.trajectories, 'Trajectories Savanna', false);
+Map.addLayer(trajectoriesClassIds[12].trajectories, visParams.trajectories, 'Trajectories Grassland', false);
+Map.addLayer(trajectoriesClassIds[33].trajectories, visParams.trajectories, 'Trajectories Water', false);
+Map.addLayer(trajectoriesClassIds[24].trajectories, visParams.trajectories, 'Trajectories Urban', false);
+Map.addLayer(trajectoriesClassIds[18].trajectories, visParams.trajectories, 'Trajectories Agriculture', false);
+Map.addLayer(trajectoriesClassIds[11].trajectories, visParams.trajectories, 'Trajectories Wetland', false);
 
 
-print("trajectoriesImage", trajectoriesImage)
+print("trajectoriesImage", trajectoriesImage);
 
 /**
- * @description
- *    calculate area
- * 
- * @author
- *    João Siqueira
- * 
+ * calculate area and export
  */
-
-
 
 // Asset mapbiomas (trajectories composite by class)
 var asset = trajectoriesComposite
@@ -430,12 +424,11 @@ var scale = 30;
 
 // Define a list of classes to export
 var classe = [
-  'for', 'pas','sav', 'gra','wat','urb', 'agr', 'wet'
+  'forest', 'pasture', 'savanna', 'grassland', 'water', 'urban', 'agriculture', 'wetland'
 ];
 
 // Define a Google Drive output folder 
 var driverFolder = 'AREA-EXPORT';
-
 
 // Territory image
 var territory = ee.Image(assetTerritories);
@@ -450,8 +443,9 @@ var pixelArea = ee.Image.pixelArea().divide(1000000);
 var geometry = trajectoriesImage.geometry();
 
 /**
- * Convert a complex ob to feature collection
- * @param obj 
+ * Converts a grouped-reducer dictionary into a FeatureCollection.
+ * @param {ee.Dictionary} obj A dictionary with 'territory' and 'groups' keys.
+ * @returns {ee.FeatureCollection}
  */
  
  
@@ -482,13 +476,13 @@ var convert2table = function (obj) {
     return ee.FeatureCollection(ee.List(tableRows));
 };
 
-/*
- * Calculate area crossing a cover map (deforestation, mapbiomas)
- * and a region map (states, biomes, municipalites)
- * @param image 
- * @param territory 
- * @param geometry
-*/
+/**
+ * Calculates zonal area (km²) by crossing a thematic raster with a territory raster.
+ * @param {ee.Image} image Thematic raster with integer class bands.
+ * @param {ee.Image} territory Raster with integer territory IDs.
+ * @param {ee.Geometry} geometry Region over which to compute the area.
+ * @returns {ee.FeatureCollection} Collection of features with territory, class, and area properties.
+ */
 var calculateArea = function (image, territory, geometry) {
 
     var reducer = ee.Reducer.sum().group(1, 'class').group(1, 'territory');
@@ -512,7 +506,7 @@ var calculateArea = function (image, territory, geometry) {
 
 var areas = classe.map(
     function (classe) {
-        var image = mapbiomas.select('traj_' + classe);
+        var image = mapbiomas.select(classe);
 
         var areas = calculateArea(image, territory, geometry);
 
@@ -538,10 +532,9 @@ Export.table.toDrive({
 });
 
 
-
-
-// LEGEND
-
+/**
+ * legend
+ */
 var nChangesLegend = Legend.getLegend(
     {
         "title": "Number of changes",
@@ -589,14 +582,14 @@ var trajectoriesLegend = Legend.getLegend(
         "title": "Trajectories",
         "layers": [
             [visParams.trajectories.palette[0], 0, "Mask"],
-            [visParams.trajectories.palette[1], 1, "Presence🡪Loss🡪Absence"],
-            [visParams.trajectories.palette[2], 2, "Absence🡪Gain🡪Presence"],
-            [visParams.trajectories.palette[3], 3, "Presence🡪Alternation🡪Loss🡪Absence"],
-            [visParams.trajectories.palette[4], 4, "Absence🡪Alternation🡪Gain🡪Presence"],
-            [visParams.trajectories.palette[5], 5, "Presence🡪Alternation🡪Presence"],
-            [visParams.trajectories.palette[6], 6, "Absence🡪Alternation🡪Absence"],
-            [visParams.trajectories.palette[7], 7, "Presence🡪Stable🡪Presence"],
-            [visParams.trajectories.palette[8], 8, "Absence🡪Stable🡪Absence"],
+            [visParams.trajectories.palette[1], 1, "Presence→Loss→Absence"],
+            [visParams.trajectories.palette[2], 2, "Absence→Gain→Presence"],
+            [visParams.trajectories.palette[3], 3, "Presence→Alternation→Loss→Absence"],
+            [visParams.trajectories.palette[4], 4, "Absence→Alternation→Gain→Presence"],
+            [visParams.trajectories.palette[5], 5, "Presence→Alternation→Presence"],
+            [visParams.trajectories.palette[6], 6, "Absence→Alternation→Absence"],
+            [visParams.trajectories.palette[7], 7, "Presence→Stable→Presence"],
+            [visParams.trajectories.palette[8], 8, "Absence→Stable→Absence"],
         ],
         "style": {
             "backgroundColor": "#21242E",
@@ -687,6 +680,9 @@ var panel = ui.Panel({
 
 Map.add(panel);
 
+/**
+ * layers inspector
+ */
 var layersInspector = {
 
     data: {
@@ -698,14 +694,14 @@ var layersInspector = {
 
     trajectory_names: [
         'Mask',
-        'Presence🡪Loss🡪Absence',
-        'Absence🡪Gain🡪Presence',
-        'Presence🡪Alternation🡪Loss🡪Absence',
-        'Absence🡪Alternation🡪Gain🡪Presence',
-        'Presence🡪Alternation🡪Presence',
-        'Absence🡪Alternation🡪Absence',
-        'Presence🡪Stable🡪Presence',
-        'Absence🡪Stable🡪Absence',
+        'Presence→Loss→Absence',
+        'Absence→Gain→Presence',
+        'Presence→Alternation→Loss→Absence',
+        'Absence→Alternation→Gain→Presence',
+        'Presence→Alternation→Presence',
+        'Absence→Alternation→Absence',
+        'Presence→Stable→Presence',
+        'Absence→Stable→Absence',
     ],
     init: function () {
         layersInspector.ui.init();
@@ -827,10 +823,7 @@ var layersInspector = {
                 'layout': ui.Panel.Layout.flow('vertical'),
                 'style': {
                     'width': '500px',
-                    // 'height': '150px',
                     'position': 'bottom-right',
-                    // 'margin': '0px 0px 0px 0px',
-                    // 'padding': '0px',
                     'backgroundColor': '#21242E'
                 },
             }),
@@ -910,6 +903,9 @@ var layersInspector = {
 
 layersInspector.init();
 
+/**
+ * temporal series inspector
+ */
 var tsInspector = {
 
     options: {
@@ -1007,8 +1003,7 @@ var tsInspector = {
     },
 
     assets: {
-        image: image,
-        // imagef: image
+        image: image
     },
 
     data: {
@@ -1049,7 +1044,6 @@ var tsInspector = {
 
     loadData: function () {
         tsInspector.data.image = ee.Image(tsInspector.assets.image);
-        // Inspector.data.imagef = ee.Image(Inspector.assets.imagef);
     },
 
     init: function () {
@@ -1189,7 +1183,6 @@ var tsInspector = {
             init: function () {
 
                 tsInspector.ui.form.panelInspector.add(tsInspector.ui.form.chartInspector);
-                // Inspector.ui.form.panelInspector.add(Inspector.ui.form.chartInspectorf);
 
                 tsInspector.options.title = 'Temporal series';
                 tsInspector.ui.form.chartInspector.setOptions(tsInspector.options);
@@ -1224,7 +1217,9 @@ var tsInspector = {
 
 tsInspector.init();
 
-//
+/**
+ * chart
+ */
 var Chart = {
 
     options: {
@@ -1372,28 +1367,28 @@ var Chart = {
     variables: {
         territory_id: 'Brazil',
         trajectory_ids: [
-            11, // Loss (Presence🡪Loss🡪Absence)
-            13, // Loss (Presence🡪Alternation🡪Loss🡪Absence)
-            14, // Loss (Absence🡪Alternation🡪Gain🡪Presence)
-            15, // Loss (Presence🡪Alternation🡪Presence)
-            16, // Loss (Absence🡪Alternation🡪Absence)
-            22, // Gain (Absence🡪Gain🡪Presence)
-            23, // Gain (Presence🡪Alternation🡪Loss🡪Absence)
-            24, // Gain (Absence🡪Alternation🡪Gain🡪Presence)
-            25, // Gain (Presence🡪Alternation🡪Presence)
-            26, // Gain (Absence🡪Alternation🡪Absence)
+            11, // Loss (Presence→Loss→Absence)
+            13, // Loss (Presence→Alternation→Loss→Absence)
+            14, // Loss (Absence→Alternation→Gain→Presence)
+            15, // Loss (Presence→Alternation→Presence)
+            16, // Loss (Absence→Alternation→Absence)
+            22, // Gain (Absence→Gain→Presence)
+            23, // Gain (Presence→Alternation→Loss→Absence)
+            24, // Gain (Absence→Alternation→Gain→Presence)
+            25, // Gain (Presence→Alternation→Presence)
+            26, // Gain (Absence→Alternation→Absence)
         ],
         trajectory_names: [
-            'L.Presence🡪Loss🡪Absence',
-            'L.Presence🡪Alternation🡪Loss🡪Absence',
-            'L.Absence🡪Alternation🡪Gain🡪Presence',
-            // 'L.Presence🡪Alternation🡪Presence',
-            'L.Absence🡪Alternation🡪Absence',
-            'G.Absence🡪Gain🡪Presence',
-            'G.Presence🡪Alternation🡪Loss🡪Absence',
-            'G.Absence🡪Alternation🡪Gain🡪Presence',
-            // 'G.Presence🡪Alternation🡪Presence',
-            'G.Absence🡪Alternation🡪Absence',
+            'L.Presence→Loss→Absence',
+            'L.Presence→Alternation→Loss→Absence',
+            'L.Absence→Alternation→Gain→Presence',
+            // 'L.Presence→Alternation→Presence',
+            'L.Absence→Alternation→Absence',
+            'G.Absence→Gain→Presence',
+            'G.Presence→Alternation→Loss→Absence',
+            'G.Absence→Alternation→Gain→Presence',
+            // 'G.Presence→Alternation→Presence',
+            'G.Absence→Alternation→Absence',
         ],
         class_id: 3,
         biome_ids: {
@@ -1547,7 +1542,6 @@ var Chart = {
                         var headers = ["Time Intervals"].concat(Chart.variables.trajectory_names).concat({ 'role': 'style' });
 
                         dataTable = [headers].concat(dataTable);
-                        // print(dataTable);
                         Chart.ui.form.chartTrajectories.setDataTable(dataTable);
 
                     }

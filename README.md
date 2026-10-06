@@ -1,8 +1,8 @@
-# Beyond Net Change: Four Decades of LULC Trajectories Across Brazilian Biomes
+# Beyond Net Change: Four Decades of Land Use and Land Cover Trajectories Across Brazil
 
-Interactive Google Earth Engine dashboard for analyzing Land Use and Land Cover (LULC) trajectories using MapBiomas Brazil Collection 10 data (1985–2024). Implements the trajectory classification method from Bilintoh et al. (2024) to categorize pixel-level land change dynamics into eight trajectories.
+Interactive Google Earth Engine dashboard, plus the analysis code and the final tables and figures, for analyzing Land Use and Land Cover (LULC) trajectories using MapBiomas Brazil Collection 10 data (1985–2024). Implements the trajectory classification method from Bilintoh et al. (2024) to categorize pixel-level land change dynamics into eight trajectories.
 
-Source code for *Fonseca et al. (2026)* — "Beyond net change: four decades of land cover and land use trajectories across Brazilian biomes."
+Source code for *Fonseca et al. (2026)* — "Beyond Net Change: Four Decades of Land Use and Land Cover Trajectories Across Brazil."
 
 ![MapBiomas Trajectories Dashboard](screenshot.png)
 
@@ -21,33 +21,54 @@ The script loads MapBiomas Collection 10 data, remaps the original 49 classes, c
 - **Time series chart** — click a point to see the annual class value across the full 1985–2024 time series
 - **Area export** — computes trajectory-class area per biome and exports to Google Drive as CSV
 
+
+
+## Repository layout
+
+```
+trajectories.js     the Earth Engine dashboard described below
+analysis/           code that produces the tables and figures (time-intensity analysis)
+results/tables/     final Excel workbooks, one per interval grid
+results/figures/    final figures and their captions
+```
+
+- [`analysis/README.md`](analysis/README.md) — how to reproduce the tables and figures.
+- [`analysis/METHODS.md`](analysis/METHODS.md) — the method, equations, outputs and verification.
+- [`results/README.md`](results/README.md) — what each table sheet and each figure contains.
+
 ## Classes of interest
 
-| ID | Class |
-|----|-------|
-| 3 | Forest Formation |
-| 4 | Savanna Formation |
-| 11 | Wetland |
-| 12 | Grassland |
-| 15 | Pasture |
-| 18 | Agriculture (Cropland) |
-| 24 | Urban Area |
-| 33 | Water |
+
+| ID  | Class                  |
+| --- | ---------------------- |
+| 3   | Forest Formation       |
+| 4   | Savanna Formation      |
+| 11  | Wetland                |
+| 12  | Grassland              |
+| 15  | Pasture                |
+| 18  | Agriculture (Cropland) |
+| 24  | Urban Area             |
+| 33  | Water                  |
+
+
+
 
 ## Trajectory categories
 
-| TR | Name | Description |
-|----|------|-------------|
-| 1 | Loss without alternation | Presence → Loss → Absence |
-| 2 | Gain without alternation | Absence → Gain → Presence |
-| 3 | Loss with alternation | Presence → Alternation → Loss → Absence |
-| 4 | Gain with alternation | Absence → Alternation → Gain → Presence |
-| 5 | All alternation, loss first | Presence → Alternation → Presence |
-| 6 | All alternation, gain first | Absence → Alternation → Absence |
-| 7 | Stable presence | Presence → Stable → Presence |
-| 8 | Stable absence | Absence → Stable → Absence |
 
-Adapted from Bilintoh, T. M., Pontius, R. G., & Zhang, A. (2024). Methods to compare sites concerning a category's change during various time intervals. *GIScience & Remote Sensing, 61*(1). https://doi.org/10.1080/15481603.2024.2409484
+| TR  | Name                        | Description                             |
+| --- | --------------------------- | --------------------------------------- |
+| 1   | Loss without alternation    | Presence → Loss → Absence               |
+| 2   | Gain without alternation    | Absence → Gain → Presence               |
+| 3   | Loss with alternation       | Presence → Alternation → Loss → Absence |
+| 4   | Gain with alternation       | Absence → Alternation → Gain → Presence |
+| 5   | All alternation, loss first | Presence → Alternation → Presence       |
+| 6   | All alternation, gain first | Absence → Alternation → Absence         |
+| 7   | Stable presence             | Presence → Stable → Presence            |
+| 8   | Stable absence              | Absence → Stable → Absence              |
+
+
+Adapted from Bilintoh, T. M., Pontius, R. G., & Zhang, A. (2024). Methods to compare sites concerning a category's change during various time intervals. *GIScience & Remote Sensing, 61*(1). [https://doi.org/10.1080/15481603.2024.2409484](https://doi.org/10.1080/15481603.2024.2409484)
 
 ## Script structure
 
@@ -60,18 +81,26 @@ trajectories.js
 └── 5. Legend                   — legend panel, color ramps, state boundaries
 ```
 
+
+
 ## External assets
 
 The script requires read access to these Earth Engine assets:
 
-| Asset | Purpose |
-|-------|---------|
-| `projects/mapbiomas-public/assets/brazil/lulc/collection10/mapbiomas_brazil_collection10_coverage_v2` | LULC maps (Collection 10) |
-| `projects/mapbiomas-territories/assets/TERRITORIES/LULC/BRAZIL/COLLECTION9/dashboard` | Territory/biome raster |
-| `projects/mapbiomas-workspace/AUXILIAR/estados-2017--` | State boundaries |
-| `projects/nexgenmap/MapBiomas_TOOLs/Trajectories/Trajs_image_col9` | Reference trajectories image |
+
+| Asset                                                                                                 | Purpose                      |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `projects/mapbiomas-public/assets/brazil/lulc/collection10/mapbiomas_brazil_collection10_coverage_v2` | LULC maps (Collection 10)    |
+| `projects/mapbiomas-territories/assets/TERRITORIES/LULC/BRAZIL/COLLECTION9/dashboard`                 | Territory/biome raster       |
+| `projects/mapbiomas-workspace/AUXILIAR/estados-2017--`                                                | State boundaries             |
+| `projects/nexgenmap/MapBiomas_TOOLs/Trajectories/Trajs_image_col9`                                    | Reference trajectories image |
+
+
+
 
 ## Paper output assets
+
+
 
 ### `lulc_trajectories_per_class_col10`
 
@@ -87,6 +116,6 @@ Image with a band containing 4-digit values, each corresponding to the trajector
 
 ## References
 
-Bilintoh, T. M., Pontius, R. G., & Zhang, A. (2024). Methods to compare sites concerning a category's change during various time intervals. *GIScience & Remote Sensing, 61*(1). https://doi.org/10.1080/15481603.2024.2409484
+Bilintoh, T. M., Pontius, R. G., & Zhang, A. (2024). Methods to compare sites concerning a category's change during various time intervals. *GIScience & Remote Sensing, 61*(1). [https://doi.org/10.1080/15481603.2024.2409484](https://doi.org/10.1080/15481603.2024.2409484)
 
-Fonseca, M., Rosa, M., Shimbo, J. Z., Ramos Neto, M. B., Matos, A. P., Lupinetti-Cunha, A., Conciani, D., Rosa, E., Vélez-Martin, E., Siqueira, J., Mourão, K., Oliveira Jr, L. A., Ramos, M., Crusco, N., & Azevedo, T. (2026). Beyond net change: four decades of land cover and land use trajectories across Brazilian biomes.
+Fonseca, M., Rosa, M., Shimbo, J. Z., Ramos Neto, M. B., Matos, A. P., Lupinetti-Cunha, A., Conciani, D., Rosa, E., Vélez-Martin, E., Siqueira, J., Mourão, K., Oliveira Jr, L. A., Ramos, M., Crusco, N., & Azevedo, T. (2026). Beyond Net Change: Four Decades of Land Use and Land Cover Trajectories Across Brazil.

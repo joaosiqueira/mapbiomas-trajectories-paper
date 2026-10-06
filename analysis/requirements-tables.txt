@@ -1,0 +1,13 @@
+# Ambiente dos scripts em notebooks/scripts/ (agregacao local, xlsx e figuras).
+#
+# pandas fixado em <3 por cautela. A dependencia de API privada que existia
+# (pandas.core.common.flatten) foi removida em favor de itertools.chain.
+pandas>=2.0,<3
+numpy
+xlsxwriter
+openpyxl
+matplotlib
+
+# Opcional: so e usado para traduzir feature_id em nome de territorio, lendo os
+# shapefiles de data/SHAPES. Sem ele as tabelas saem com os ids.
+# geopandas

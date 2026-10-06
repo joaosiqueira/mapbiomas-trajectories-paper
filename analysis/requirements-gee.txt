@@ -1,0 +1,3 @@
+# Ambiente dos scripts em statistics/ (enfileiram tarefas no Earth Engine).
+# Autenticar uma vez com: earthengine authenticate
+earthengine-api

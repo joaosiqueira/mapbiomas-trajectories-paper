@@ -15,3 +15,10 @@ Thumbs.db
 # Google Earth Engine exports
 *.tif
 *.csv
+
+# analysis: downloaded GeoJSON and locally built outputs, plus the environment
+analysis/data/*
+!analysis/data/.gitkeep
+analysis/.venv
+__pycache__/
+*.pyc

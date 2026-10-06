@@ -2,7 +2,7 @@
 
 Code that produces the tables and figures in [`../results/`](../results/README.md): the
 *time intensity* analysis of Bilintoh, Pontius & Zhang (2024) applied to MapBiomas Brazil
-Collection 10 (1985–2024), for eight land cover classes, Brazil and its six biomes. The
+Collection 10 (1985–2024), for eight land cover classes, Brazil. The
 method, its equations, the outputs and the checks are in [`METHODS.md`](METHODS.md).
 
 ## Pipeline
@@ -95,7 +95,7 @@ generic serif and the line breaks may differ slightly.
 | asset | purpose |
 |---|---|
 | `projects/mapbiomas-public/assets/brazil/lulc/collection10/mapbiomas_brazil_collection10_coverage_v2` | land cover maps, 1985–2024 |
-| `projects/mapbiomas-workspace/AUXILIAR/ESTATISTICAS/COLECAO8/VERSAO-1` | territory rasters (`country`, `refined_biome`) |
+| `projects/mapbiomas-workspace/AUXILIAR/ESTATISTICAS/COLECAO8/VERSAO-1` | territory rasters (`country`) |
 | `projects/mapbiomas-public/assets/papers/fonseca_et_all_2026/lulc_trajectories_per_class_col10` | published trajectories, used only as an optional cross-check |
 
 ## Decisions that matter when reading the numbers

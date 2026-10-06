@@ -4,7 +4,7 @@ Edit the three PLACEHOLDER values below before running anything that writes to E
 Engine or Cloud Storage: they are destinations that only you can write to.
 """
 
-# Territory layers used to cross the events (country and biome rasters).
+# Territory layers used to cross the events (country raster).
 # Input only; read access is enough.
 ASSET_THEMES = "projects/mapbiomas-workspace/AUXILIAR/ESTATISTICAS/COLECAO8/VERSAO-1"
 
@@ -78,33 +78,23 @@ INTENSITY_CLASS_IDS = [
 
 INTENSITY_THEMES = [
     ("country", "raster"),
-    ("refined_biome", "raster"),
 ]
 
-# Contiguous, non-overlapping tilings of the 39 annual transitions. The last interval of
-# each grid is deliberately shorter (4 and 9 years); bar width shows it in the figure.
+# Contiguous, non-overlapping tiling of the 39 annual transitions. The last interval is
+# deliberately shorter (4 years); bar width shows it in the figure.
 # These must not overlap - the area of each bar is meant to sum to
 # the total change. notebooks/scripts/selftest_time_intensity.py checks the tiling.
 INTERVAL_GRIDS = {
     '5y': [(1985, 1990), (1990, 1995), (1995, 2000), (2000, 2005),
            (2005, 2010), (2010, 2015), (2015, 2020), (2020, 2024)],
-    '10y': [(1985, 1995), (1995, 2005), (2005, 2015), (2015, 2024)],
 }
 
 
-# Feature ids of the territory rasters, with the names MapBiomas publishes in English.
+# Feature id of the territory raster, with the name MapBiomas publishes in English.
 # Taken from the ids in the theme assets, but not from their NAME field: that column is
 # Portuguese despite its name, identical to NAME_PT_BR.
 TERRITORY_NAMES = {
     'country': {1: 'Brazil'},
-    'refined_biome': {
-        2: 'Amazon',
-        3: 'Caatinga',
-        4: 'Cerrado',
-        5: 'Atlantic Forest',
-        6: 'Pampa',
-        7: 'Pantanal',
-    },
 }
 
 def territoryName(category, feature_id):

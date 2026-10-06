@@ -28,7 +28,7 @@ The script loads MapBiomas Collection 10 data, remaps the original 49 classes, c
 ```
 trajectories.js     the Earth Engine dashboard described below
 analysis/           code that produces the tables and figures (time-intensity analysis)
-results/tables/     final Excel workbooks, one per interval grid
+results/tables/     final Excel workbook (5y interval grid)
 results/figures/    final figures and their captions
 ```
 

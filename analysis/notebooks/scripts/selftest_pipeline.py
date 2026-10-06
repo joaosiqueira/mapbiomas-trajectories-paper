@@ -91,24 +91,18 @@ def main():
     assert UNIFIED_BY_TRAJECTORY[8] * 100 not in (got,)
     print('  unified size        OK  (%.0f ha, trajetoria 8 excluida)' % got)
 
-    # 2. the two grids must agree, composite by composite
+    # 2. per-composite totals of the grid
     totals = {}
     for grid in config.INTERVAL_GRIDS:
         table = ti.buildIntensityTable(df, grid)
         totals[grid] = table.groupby('composite_id')[ti.AREA_COLUMN].sum().to_dict()
-
-    assert totals['5y'].keys() == totals['10y'].keys()
-    for composite in totals['5y']:
-        a, b = totals['5y'][composite], totals['10y'][composite]
-        assert abs(a - b) < 1e-6, (composite, a, b)
-    print('  equivalencia 5y/10y OK  (%d compostos, totais identicos)' % len(totals['5y']))
 
     # 3. only the ten possible composites
     observed = set(int(c) for c in totals['5y'])
     assert observed == set(legend.COMPOSITES), sorted(observed)
     print('  compostos validos   OK  %s' % sorted(observed))
 
-    # 4. averages agree with the per-interval numbers, for both grids
+    # 4. averages agree with the per-interval numbers
     averages = ti.averageLines(df).iloc[0]
     for grid in config.INTERVAL_GRIDS:
         table = ti.buildIntensityTable(df, grid)

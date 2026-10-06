@@ -24,7 +24,7 @@ import tables  # noqa: E402
 import time_intensity as ti  # noqa: E402
 import plots  # noqa: E402
 
-CATEGORIES = ['COUNTRY', 'REFINED_BIOME']
+CATEGORIES = ['COUNTRY']
 
 PRODUCT = 'INTENSIDADE-TEMPO'
 
@@ -34,9 +34,9 @@ PATH = '../../data/JSON/{}/{}-{}/*{}*'
 
 OUTPUT_FOLDER = '../../data/FIGURES'
 
-# Grouped as {territory}/{grid}/: one flat directory of 139 files is not navigable.
-FOLDER_BY_TERRITORY = True
-FOLDER_BY_GRID = True
+# Flat: the few figures of the paper go straight into OUTPUT_FOLDER.
+FOLDER_BY_TERRITORY = False
+FOLDER_BY_GRID = False
 
 OUTPUT_VERSION = '1'
 
@@ -64,10 +64,9 @@ PAPER_STYLE = True
 
 COLUMNS = 2
 
-# Both y-axis versions are produced. A free axis shows how each class changed over time;
-# a shared one shows which class changes more, at the cost of the small classes' detail.
-# Neither answers the other's question, so the pair is written rather than a choice made.
-Y_AXIS_VERSIONS = (('free', False), ('sharedy', True))
+# Only the shared y axis is used in the paper: it shows which class changes more, at the
+# cost of the small classes' detail.
+Y_AXIS_VERSIONS = (('sharedy', True),)
 
 CLASS_ORDER = [name for _, _, name in config.INTENSITY_CLASS_IDS]
 
@@ -175,8 +174,8 @@ def main():
     ti.checkComponents(components)
 
     # Outside the grid loop on purpose. The components use the whole 1985-2024 extent, so
-    # they do not depend on the interval grid: drawn inside the loop, the 5y and 10y files
-    # come out byte-identical, which is exactly what the per-panel components figure does.
+    # they do not depend on the interval grid: drawn inside the loop they would be
+    # redrawn identically for every grid.
     if 'components-bar' in FIGURE_MODES:
         for category, feature_id in territoryKeys(components):
 

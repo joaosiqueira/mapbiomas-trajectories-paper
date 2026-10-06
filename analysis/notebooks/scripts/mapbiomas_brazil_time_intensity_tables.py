@@ -23,7 +23,7 @@ import time_intensity as ti  # noqa: E402
 # Territory folders written by the export. Uncomment to add more.
 OBJ = [
     {
-        'category': ['COUNTRY', 'REFINED_BIOME'],
+        'category': ['COUNTRY'],
         'product': 'INTENSIDADE-TEMPO',
         'version': config.OUTPUT_VERSION,
         # optional: needs geopandas, only to turn feature_id into a territory name

@@ -150,37 +150,6 @@ def test_interval_grids():
               % (name, len(intervals), durations, sum(durations)))
 
 
-def test_grid_equivalence():
-    """Both grids cover the same transitions, so per-composite totals must agree.
-
-    This is the strongest end-to-end check available without GEE: it is what catches a
-    mis-assigned interval in the aggregation step.
-    """
-
-    # synthetic per-transition areas, arbitrary but fixed
-    areas = {}
-    for index, year in enumerate(YEARS[:-1]):
-        for composite in legend.COMPOSITES:
-            areas[(year, composite)] = (index + 1) * (composite % 10) * 1.5
-
-    def total_by_grid(intervals):
-        totals = {}
-        for start, end in intervals:
-            for year in range(start, end):
-                for composite in legend.COMPOSITES:
-                    totals[composite] = totals.get(composite, 0.0) + areas[(year, composite)]
-        return totals
-
-    five = total_by_grid(INTERVAL_GRIDS['5y'])
-    ten = total_by_grid(INTERVAL_GRIDS['10y'])
-
-    assert five.keys() == ten.keys()
-    for composite in five:
-        assert abs(five[composite] - ten[composite]) < 1e-9, composite
-
-    print('  3. equivalencia 5y/10y  OK  (%d compostos batem)' % len(five))
-
-
 def test_area_identity():
     """sum(width x height) over the bars equals the total change over the extent.
 
@@ -368,7 +337,6 @@ if __name__ == '__main__':
 
     test_composite_rule()
     test_interval_grids()
-    test_grid_equivalence()
     test_area_identity()
     test_unified_size()
     test_legend_colors()

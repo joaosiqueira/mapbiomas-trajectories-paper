@@ -12,11 +12,9 @@ analysis is rerun.
 - **Classes (8):** forest formation (3), savanna formation (4), wetland (11), grassland
   (12), pasture (15), agriculture/cropland (18), urban area (24), river, lake and ocean
   (33), referred to in the figures as *Cropland* and *Water*.
-- **Territories (7):** Brazil and the six biomes — Amazon, Caatinga, Cerrado, Atlantic
-  Forest, Pampa, Pantanal.
-- **Interval grids:** `5y` = 1985–1990, …, 2015–2020, 2020–2024; `10y` = 1985–1995,
-  1995–2005, 2005–2015, 2015–2024. Both tile the 39 annual transitions; the last interval
-  is shorter on purpose.
+- **Territory:** Brazil (the paper reports no biome-level figures).
+- **Interval grid:** `5y` = 1985–1990, …, 2015–2020, 2020–2024. It tiles the 39 annual
+  transitions; the last interval is shorter on purpose.
 - **Unified size (U):** the area where a class occurs in at least one year. Every change is
   expressed as a percentage of its class's U per year, so classes of very different size
   share one axis.
@@ -36,16 +34,15 @@ analysis is rerun.
 
 ## Tables — `tables/`
 
-`brazil-time-intensity-c10-5y-1a.xlsx` and `brazil-time-intensity-c10-10y-1a.xlsx`, one per
-interval grid, six sheets each.
+`brazil-time-intensity-c10-5y-1a.xlsx`, six sheets.
 
 | sheet | content |
 |---|---|
-| `intensity` | the tidy table the figures are drawn from: one row per territory × class × interval × composite. Main columns: `territory`, `class_name`, `period`, `year_start`, `year_end`, `duration_years`, `event` (loss or gain), `trajectory_id`, `trajectory_label_en`, `gross change (hectare)`, `unified_size_ha`, `annual_area_ha_per_year`, `pct_of_unified_per_year` (the vertical axis), `pct_signed` |
+| `intensity` | the tidy table the figures are drawn from: one row per class × interval × composite. Main columns: `territory`, `class_name`, `period`, `year_start`, `year_end`, `duration_years`, `event` (loss or gain), `trajectory_id`, `trajectory_label_en`, `gross change (hectare)`, `unified_size_ha`, `annual_area_ha_per_year`, `pct_of_unified_per_year` (the vertical axis), `pct_signed` |
 | `intensity_wide` | the same values with one column per period, for reading |
-| `unified_size` | area per base trajectory 1–8 per territory and class; U is the sum of 1–7, and 8 is kept so the total can be audited against the territory area |
+| `unified_size` | area per base trajectory 1–8 per class; U is the sum of 1–7, and 8 is kept so the total can be audited against the territory area |
 | `averages` | gross gain and gross loss over 1985–2024 (equations 4 and 5, the dashed lines in the figures), plus net and total change |
-| `components` | Quantity, Exchange and Alternation per territory and class (equations 7–9), the direction of the net change and the endpoint gain and loss they were computed from |
+| `components` | Quantity, Exchange and Alternation per class (equations 7–9), the direction of the net change and the endpoint gain and loss they were computed from |
 | `legend` | the ten (event, trajectory) composites with labels and colours |
 
 > **`gross change (hectare)` is not an area of land.** It counts transitions: a pixel that
@@ -55,18 +52,15 @@ interval grid, six sheets each.
 
 ## Figures — `figures/`
 
-63 PNG files at 300 dpi, sized for an A4 text block (at most 170 × 240 mm), plus
+3 PNG files at 300 dpi, sized for an A4 text block (at most 170 × 240 mm), plus
 `captions.txt` with the full caption of every figure — the figures carry neither title nor
 caption, since both are set as running text in the paper.
 
 ```
 figures/captions.txt
-figures/<territory>/components-by-class-<territory>-v1.png
-figures/<territory>/<grid>/time-intensity-a4-<type>-<yaxis>-<grid>-<territory>-v1.png
+figures/components-by-class-brazil-v1.png
+figures/time-intensity-a4-<type>-sharedy-5y-brazil-v1.png
 ```
-
-`<territory>` is `brazil`, `amazon`, `caatinga`, `cerrado`, `atlantic-forest`, `pampa` or
-`pantanal`.
 
 | figure | what it shows | how to read it |
 |---|---|---|
@@ -74,11 +68,23 @@ figures/<territory>/<grid>/time-intensity-a4-<type>-<yaxis>-<grid>-<territory>-v
 | `time-intensity-a4-components-*` (Figure 5) | the same eight panels, one bar each | the total gross change decomposed into **Quantity** (net change between first and last year), **Exchange** (gain here paired with loss elsewhere between those same years) and **Alternation** (gain and loss at one location through the series, invisible to a two-date comparison). The three sum to the total |
 | `components-by-class-*` | one axis, eight columns | all classes side by side on a common scale; the letter above a column is the direction of the net change, **L** for loss and **G** for gain. Independent of the interval grid |
 
-`<yaxis>` is `free` or `sharedy`. With `free`, each panel is scaled to fill itself, which
-shows how a class changed through time; heights are not comparable between panels. With
-`sharedy`, all panels share one scale, which shows which class changes more, at the cost of
-detail in the slow classes.
+The time-intensity figures use a shared y axis (`sharedy`): all eight panels share one scale,
+which shows which class changes more.
 
 Why the same colour appears above and below the axis, and why bars can exceed 100 % of the
 unified size over the whole period, are explained in
 [`METHODS.md` §1.8–1.9](../analysis/METHODS.md).
+
+### Preview
+
+**Annual change per interval** — `time-intensity-a4-trajectories-sharedy-5y-brazil-v1.png`
+
+![Annual change of 8 land cover classes in Brazil, 5-year intervals, 1985–2024](figures/time-intensity-a4-trajectories-sharedy-5y-brazil-v1.png)
+
+**Components of change per class** — `time-intensity-a4-components-sharedy-5y-brazil-v1.png`
+
+![Components of change of 8 land cover classes in Brazil, 1985–2024](figures/time-intensity-a4-components-sharedy-5y-brazil-v1.png)
+
+**Components of change, classes side by side** — `components-by-class-brazil-v1.png`
+
+![Components of change by class in Brazil, 1985–2024](figures/components-by-class-brazil-v1.png)

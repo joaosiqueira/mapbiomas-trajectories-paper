@@ -409,14 +409,14 @@ Gain First* sits above the axis in 2000–2001 and below it in 2001–2002.
 
 ### 3.1 Tables
 
-`data/TABLES/brazil-time-intensity-c10-{5y,10y}-1a.xlsx`, six sheets each.
+`data/TABLES/brazil-time-intensity-c10-5y-1a.xlsx`, six sheets.
 
 **`intensity`** — the tidy table the figures are drawn from. One row per territory ×
 class × interval × composite.
 
 | column | meaning |
 |---|---|
-| `territory`, `category`, `feature_id` | Brasil or one of the six biomes |
+| `territory`, `category`, `feature_id` | Brazil |
 | `class_name`, `class_id`, `level_id` | one of the eight classes |
 | `grid`, `period`, `year_start`, `year_end`, `duration_years` | the interval |
 | `composite_id`, `event_id`, `event` | the composite and its loss/gain digit |
@@ -463,17 +463,13 @@ endpoint gain/loss areas the decomposition was computed from.
 ### 3.2 Figures
 
 ```
-data/FIGURES/captions.txt                                      every caption, as running text
-data/FIGURES/{territory}/
-    components-by-class-{territory}-v1.png
-data/FIGURES/{territory}/{grid}/
-    time-intensity-a4-trajectories-{free|sharedy}-{grid}-{territory}-v1.png
-    time-intensity-a4-components-{free|sharedy}-{grid}-{territory}-v1.png
+data/FIGURES/captions.txt                                  every caption, as running text
+data/FIGURES/components-by-class-brazil-v1.png
+data/FIGURES/time-intensity-a4-trajectories-sharedy-5y-brazil-v1.png
+data/FIGURES/time-intensity-a4-components-sharedy-5y-brazil-v1.png
 ```
 
-7 territories × 2 grids × 2 figures × 2 y-axis versions = 56 grid figures, plus 7
-components-by-class figures = **63 PNG files** at 300 dpi, about 11 MB, roughly 17 seconds
-to build.
+Brazil only, 5-year grid, shared y axis: 3 PNG files at 300 dpi.
 
 **The components-by-class figure.** One axes per territory, every class a column, the
 three components stacked, about 155 × 90 mm. It answers a question the eight separate
@@ -493,12 +489,10 @@ from `quantity_direction`. It replaces the per-panel `All intervals, net loss` l
 which cannot be repeated eight times across one axis without crowding it; the caption
 explains the letter.
 
-**It is written once per territory, not once per (territory, grid).** The components use
-the whole 1985–2024 extent, so they do not depend on the interval grid at all. Drawn
-inside the grid loop, as the per-panel components figure still is, the 5y and 10y files
-come out **byte-identical** — verified with `md5`. That is harmless duplication in the
-grid figures, whose file names at least say which grid they came from, but it would be
-actively misleading in a figure whose caption says "all intervals".
+**It is written once, not once per grid.** The components use the whole 1985–2024 extent,
+so they do not depend on the interval grid at all. Drawn inside the grid loop it would be
+redrawn identically for every grid, which would be misleading in a figure whose caption
+says "all intervals".
 
 **Two figures, not one.** The pair does not fit an A4 page at a legible size, so the
 coloured charts and the grey decomposition are separate, each holding the eight classes in
@@ -514,15 +508,14 @@ a four-column legend once pushed the figure to 184 mm without any warning.
 captions go to `captions.txt` and each is self-contained: it names the territory, the
 interval grid and the meaning of every element, since there is no title to lean on.
 
-`FIGURE_MODES` is `('complete',)`. Two other modes exist and are off: `'panel'`, the
+`FIGURE_MODES` is `('complete', 'components-bar')`. Two other modes exist and are off: `'panel'`, the
 pre-A4 large grid, now redundant; and `'single'`, one figure per class.
 
 `FORMATS` is PNG only. The vector PDF is the slow half of the build and doubles the file
 count; add `'pdf'` back when a submission needs it.
 
-`FOLDER_BY_TERRITORY` and `FOLDER_BY_GRID` each turn a directory level off. The file names
-carry the territory and the grid regardless, so a figure pulled out of the tree and sent on
-its own is still self-describing.
+`FOLDER_BY_TERRITORY` and `FOLDER_BY_GRID` are both off: the figures go straight into
+`data/FIGURES/`.
 
 #### Layout decisions worth keeping
 
@@ -601,19 +594,6 @@ Forest formation's loss per interval peaks at 0.758%/yr in 2000–2005, falls to
 in 2010–2015 and rises again to 0.558%/yr in 2020–2024, reproducing the known Brazilian
 deforestation curve. Gross gain stays between 0.20 and 0.26%/yr throughout.
 
-**Alternation share by biome**, as a percentage of each cell's total gross change:
-
-| class | Amazon | Caatinga | Cerrado | Atlantic Forest | Pampa | Pantanal |
-|---|---|---|---|---|---|---|
-| forest_formation | 38 | 65 | 48 | 43 | 74 | 59 |
-| savanna_formation | 63 | 55 | 55 | 59 | — | 72 |
-| wetland | 85 | 80 | 38 | 68 | 87 | 96 |
-| grassland | 76 | 64 | 13 | 51 | 70 | 93 |
-| pasture | 47 | 72 | 61 | 65 | 87 | 40 |
-| agriculture | 38 | 49 | 37 | 60 | 73 | 81 |
-| urban_area | 15 | 14 | 10 | 8 | 7 | 4 |
-| river_lake_and_ocean | 90 | 90 | 67 | 79 | 80 | 90 |
-
 ### Reading these numbers with care
 
 **Urban area behaves as physical reasoning predicts**: Alternation is 4–15% everywhere,
@@ -627,8 +607,7 @@ areas genuinely appear and disappear between years.
 
 **Grassland at 86% nationally deserves scrutiny.** Some of it is real, but grassland is
 also a class that classification confuses with pasture and savanna, and alternation is
-exactly how confusion manifests. The Cerrado figure of 13% against Pantanal's 93% is a
-large spread for one class and is worth investigating before it is interpreted as ecology.
+exactly how confusion manifests.
 
 **Alternation is not noise by definition, and not signal by definition.** It measures
 reversal. Whether a given reversal is a wet season, a fallow, a regrowth cycle or a
@@ -643,7 +622,6 @@ and `selftest_pipeline.py` (needs the venv):
 
 - **The ten-composite rule**, by exhaustive enumeration of 131 068 binary series.
 - **Grid tiling**: each grid sums to exactly 39 transitions, no overlap, no gap.
-- **Grid equivalence**: both grids give identical per-composite totals.
 - **The area identity**, asserted on the actual matplotlib patches:
   `Σ(width × height)` over the gain bars equals the total gain over the extent. This is
   the property that lets the figure be read as "area = amount of change".
@@ -665,9 +643,8 @@ Against the live Earth Engine API:
 
 On the real output:
 
-- The two grids agree to 0.000004 ha.
 - `Σ(duration × rate)/39` equals the dashed-line average to 1e-10 percentage points, for
-  all 55 territory × class combinations.
+  all eight classes.
 - The three components sum to the total gross change to 9e-16 percentage points.
 - `U + area(trajectory 8)` equals Brazil's area, 850.7 Mha, for every class.
 
@@ -697,7 +674,7 @@ sum zero, including impossible composites.
 | thing | where |
 |---|---|
 | LULC input | `projects/mapbiomas-public/assets/brazil/lulc/collection10/mapbiomas_brazil_collection10_coverage_v2` |
-| territory layers | `projects/mapbiomas-workspace/AUXILIAR/ESTATISTICAS/COLECAO8/VERSAO-1` (`country-raster`, `refined_biome-raster`) |
+| territory layers | `projects/mapbiomas-workspace/AUXILIAR/ESTATISTICAS/COLECAO8/VERSAO-1` (`country-raster`) |
 | published paper asset | `projects/mapbiomas-public/assets/papers/fonseca_et_all_2026/lulc_trajectories_per_class_col10` |
 | intermediate assets, GeoJSON | written to a project and bucket of your own — see `statistics/config.py` |
 
